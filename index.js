@@ -1,53 +1,75 @@
 import "dotenv/config";
-import { GoogleGenAI, Operations } from "@google/genai";
+import readline from "node:readline";
+import { GoogleGenAI } from "@google/genai";
+const resSchema ={
+        type: "object",
+        properties: {
+          questions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                question: { type: "string" },
+                options: { type: "array", items: { type: "string" } },
+                correctAnswer: { type: "string" },
+                difficulty: { type: "string" },
+                explanation: { type: "string" },
+              },
+              required: ["question", "options", "correctAnswer", "difficulty", "explanation"],
+            },
+          },
+        }
+      }
+const configuration = {
+      systemInstruction:
+        "You are an experienced educational quiz generator. Make multiple choice questions on the topic and difficulty level provided, with only one correct answer. Include a short explanation of the correct answer.",
+      temperature: 0.9,
+      responseMimeType: "application/json",
+      responseJsonSchema: resSchema
+          };
+      
+        
+    
 
-// initialize Gemini
+const prompt ="${noQuestions} beginner level multiple choice quiz questions about ${topic}"
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-// Make our first api call
-async function main() {
+async function main(noQuestions, topic) {
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite",
-    contents: "3 quiz questions on beginner level about photosynthesis",
-    config: {
-      systemInstructions:
-        "You are a well experienced education quiz generator. Now make mutiple choice questions on the topic and difficulty level provided by the user, with only one correct answer and Explain the answer after the user chooses an option.",
-        temperature : 0.9,
-        responseMimeType: "application/json",
-        responseJsonSchema:{
-            type: "object",
-            properties :
-            {
-                questions:
-                {
-                    type : "array",
-                    items: 
-                    {
-                        type : "object",
-                        properties: 
-                        {
-                            questions: {
-                                type: 'string'
-                            },
-                            options : 
-                            {
-                                type : 'array', items: {type : "string"}
-                            },
-                            correctAnswer: {type: 'string'},
-                            difficulty: {type: 'string'},
-                        },
-                        require : ['question','options','correctAnswer','difficulty']
-                    }
-                }
-            }
+    contents: prompt,
+    config: configuration,
+    required: ["questions"],
+    },
+  );
 
-        }
-        },
+  const quiz = JSON.parse(response.text);
+
+  quiz.questions.forEach((q, index) => {
+    console.log(`\nQuestion ${index + 1}: ${q.question}`);
+    console.log(`Options: ${q.options.join(", ")}`);
+    console.log(`Correct Answer: ${q.correctAnswer}`);
+    console.log(`Difficulty: ${q.difficulty}`);
+    console.log(`Explanation: ${q.explanation}`);
   });
-
-  // display the response
-  console.log(response.text);
 }
-main();
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+rl.question("Enter the number of questions for the quiz: ", (noQuestions) => {
+  rl.question("Enter the topic for the quiz: ", async (topic) => {
+    r1.question("Enter your difficulty level",(difficultylevell))
+      {rl.close();}  
+    try {
+      await main(noQuestions, topic);
+    } catch (err) {
+      console.error("Failed to generate quiz:", err.message);
+    }
+  });
+});
