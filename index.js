@@ -1,6 +1,10 @@
 import "dotenv/config";
 import readline from "node:readline";
 import { GoogleGenAI } from "@google/genai";
+import fs from "fs";
+
+const imagePath = "/SHUVA/WLiTd/ai-quiz-generator/images/notes.png"; 
+const imageData =fs.readFileSync(imagePath).toString("base64");
 const resSchema ={
         type: "object",
         properties: {
@@ -22,7 +26,7 @@ const resSchema ={
       }
 const configuration = {
       systemInstruction:
-        "You are an experienced educational quiz generator. Make multiple choice questions on the topic and difficulty level provided, with only one correct answer. Include a short explanation of the correct answer.",
+        "You are an experienced educational quiz generator that provides the quiz from the notes provided. Make multiple choice questions on the topic and difficulty level moderate, with only one correct answer. Include a short explanation of the correct answer.",
       temperature: 0.9,
       responseMimeType: "application/json",
       responseJsonSchema: resSchema
@@ -31,7 +35,14 @@ const configuration = {
         
     
 
-const prompt ="${noQuestions} beginner level multiple choice quiz questions about ${topic}"
+const prompt =[
+{
+        text: "Attached is an image of a note. Generate ${numberOfQuestions} ${difficulty} questions based on the image content"
+    },
+    {
+        inlineData: {mimeType: "image/png", data:imageData }
+    }
+]
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -64,7 +75,7 @@ const rl = readline.createInterface({
 
 rl.question("Enter the number of questions for the quiz: ", (noQuestions) => {
   rl.question("Enter the topic for the quiz: ", async (topic) => {
-    r1.question("Enter your difficulty level",(difficultylevell))
+  
       {rl.close();}  
     try {
       await main(noQuestions, topic);
