@@ -22,7 +22,8 @@ const resSchema ={
               required: ["question", "options", "correctAnswer", "difficulty", "explanation"],
             },
           },
-        }
+        },
+         required: ["questions"],
       }
 const configuration = {
       systemInstruction:
@@ -35,39 +36,57 @@ const configuration = {
         
     
 
-const prompt =[
+const prompt =(numberOfQuestions, difficulty) =>[
 {
-        text: "Attached is an image of a note. Generate ${numberOfQuestions} ${difficulty} questions based on the image content"
+        text: 'Attached is an image of a note. Generate ${numberOfQuestions} ${difficulty} questions based on the image content'
     },
     {
         inlineData: {mimeType: "image/png", data:imageData }
     }
 ]
+const follow_up_request=
+[
+  "what  is happening in it?"  
+];
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
 async function main(noQuestions, topic) {
+  const history =[];
+    history.push({role: "user", parts: prompt(noQuestions,"moderate")});
   const response = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite",
-    contents: prompt,
+    model: "gemini-3.5-flash-lite",
+    contents: history,
     config: configuration,
-    required: ["questions"],
     },
   );
 
   const quiz = JSON.parse(response.text);
-
-  quiz.questions.forEach((q, index) => {
+      { history.push({role: "model", parts: [{text: response.text}]});}
+ quiz.questions.forEach((q, index) => {
     console.log(`\nQuestion ${index + 1}: ${q.question}`);
     console.log(`Options: ${q.options.join(", ")}`);
     console.log(`Correct Answer: ${q.correctAnswer}`);
     console.log(`Difficulty: ${q.difficulty}`);
     console.log(`Explanation: ${q.explanation}`);
   });
+ for (const follow_up of follow_up_request)
+    {
+        history.push ({role: "user",parts: [{text:follow_up}]});
+        const response2 = await ai.models.generateContent(
+            {
+               model: "gemini-3.5-flash-lite", 
+               contents: history,
+               config : {systemInstruction: configuration.systemInstruction} 
+            }
+        )
+     console.log(response2.text);
+    history.push ({role: "model",parts: [{text:response2.text}]});
+    }  
 }
-
+ 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
