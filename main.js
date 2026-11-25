@@ -7,7 +7,7 @@ import{ai, model, systemInstruction} from  "./assistant.js";
 async function main(){
     const response = await ai.models.generateContent({
         model: model,
-        contents: "Imagine i am a  engineering student from a rural area from a poor background. can you help me with what should i persure next?",
+        contents: "who is the prime minister of Nepal?",
         config: {
             systemInstruction : systemInstruction,
             // request JSON output
